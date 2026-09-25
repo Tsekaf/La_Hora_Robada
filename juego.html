@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LA HORA ROBADA</title>
+<style>
+  :root {
+    --bg:#0d1117; --panel:#161b22; --ink:#e6edf3; --muted:#8b949e;
+    --accent:#58a6ff; --accent2:#d29922; --line:#30363d; --danger:#f85149;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; min-height:100vh; background:var(--bg); color:var(--ink);
+    font-family:Georgia,"Times New Roman",serif;
+    display:flex; flex-direction:column; align-items:center;
+    padding:24px 16px 60px;
+  }
+  .wrap { width:100%; max-width:720px; }
+  header { text-align:center; margin-bottom:18px; }
+  h1 { font-size:1.9rem; letter-spacing:3px; margin:0; color:var(--ink); }
+  .sub { color:var(--muted); font-style:italic; margin-top:6px; font-size:.95rem; }
+  .hud {
+    display:flex; gap:8px; flex-wrap:wrap; justify-content:center;
+    margin:14px 0; font-family:ui-monospace,Menlo,monospace; font-size:.78rem;
+  }
+  .chip { background:var(--panel); border:1px solid var(--line); border-radius:999px;
+          padding:4px 12px; color:var(--muted); }
+  .chip b { color:var(--accent); }
+  .scene {
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:26px 28px; box-shadow:0 8px 30px rgba(0,0,0,.35);
+    animation:fade .5s ease;
+  }
+  @keyframes fade { from{opacity:0; transform:translateY(8px);} to{opacity:1;} }
+  .scene h2 {
+    font-size:.8rem; letter-spacing:2px; text-transform:uppercase;
+    color:var(--accent2); margin:0 0 16px; border-bottom:1px solid var(--line);
+    padding-bottom:10px;
+  }
+  .scene p { line-height:1.7; margin:0 0 14px; font-size:1.05rem; }
+  .choices { margin-top:22px; display:flex; flex-direction:column; gap:10px; }
+  button.choice {
+    text-align:left; background:transparent; color:var(--ink);
+    border:1px solid var(--line); border-radius:8px; padding:14px 16px;
+    font-family:inherit; font-size:1rem; cursor:pointer; transition:.15s;
+    line-height:1.5;
+  }
+  button.choice:hover { border-color:var(--accent); background:rgba(88,166,255,.08);
+                        transform:translateX(3px); }
+  .num { color:var(--accent); font-weight:bold; margin-right:8px; }
+  .ending { border-color:var(--accent2); }
+  .ending h2 { color:var(--accent2); }
+  .endtag { text-align:center; color:var(--accent2); font-style:italic; margin-top:18px;
+            letter-spacing:1px; }
+  .restart {
+    display:block; margin:22px auto 0; background:var(--accent); color:#0d1117;
+    border:none; border-radius:8px; padding:12px 26px; font-family:inherit;
+    font-weight:bold; font-size:1rem; cursor:pointer;
+  }
+  .restart:hover { filter:brightness(1.1); }
+  footer { color:var(--muted); font-size:.72rem; margin-top:26px; text-align:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>LA HORA ROBADA</h1>
+    <div class="sub">Un caso de niebla y relojes detenidos</div>
+  </header>
+  <div class="hud" id="hud"></div>
+  <div id="app"></div>
+  <footer>Ficcion interactiva &middot; estado guardado en memoria &middot; v2.0</footer>
+</div>
+
+<script>
+const HISTORIA = {"meta": {"titulo": "LA HORA ROBADA", "subtitulo": "Un caso de niebla y relojes detenidos", "autor": "Equipo Juego", "version": "2.0"}, "inicio": "inicio", "estado_inicial": {"lucidez": 4, "confianza": 0, "indicios": []}, "escenas": {"inicio": {"titulo": "El 4B", "texto": "Llueve sobre el puerto desde hace tres dias y la ciudad huele a sal podrida y a carbon.\n\nEl cuerpo de Elena Var esta sentado en el sillon de su departamento, el 4B, con las manos cruzadas sobre el regazo como quien espera un tren. No hay violencia. No hay desorden. El forense, Brun, cierra su maletin sin mirarte:\n\n-Hora de muerte: las nueve de la noche. Sin discusion.\n\nPero vos tenes tres declaraciones en el bolsillo. Tres vecinos juran haber visto a Elena caminando bajo la lluvia, viva, a las once y cuarenta. Casi tres horas despues de estar muerta.\n\nAlguien le robo esas horas. O alguien miente. Tenes hasta el amanecer antes de que el rastro se enfrie.", "efectos": {}, "opciones": [{"texto": "Empezar a tirar de los hilos.", "destino": "ciudad"}]}, "ciudad": {"titulo": "La ciudad bajo la lluvia", "texto": "Cuatro hilos sueltos, una sola noche. Por donde seguis.", "efectos": {}, "opciones": [{"texto": "Interrogar a los tres testigos en el zaguan.", "destino": "testigos", "requiere": {"indicios_no": ["v_testigos"]}}, {"texto": "Registrar a fondo el departamento 4B.", "destino": "departamento", "requiere": {"indicios_no": ["v_depto"]}}, {"texto": "Apretar al forense Brun, que se fue demasiado rapido.", "destino": "forense_brun", "requiere": {"indicios_no": ["v_brun"]}}, {"texto": "Subir al faro: el farero vio pasar a Elena esa noche.", "destino": "faro_farero", "requiere": {"indicios_no": ["v_faro"]}}, {"texto": "Ya tenes con que arrancar. Ir a ver a la gente que conocia a Elena.", "destino": "encrucijada", "requiere": {"indicios_alguno": ["reloj", "carta", "forense", "faro"]}}]}, "testigos": {"titulo": "El zaguan", "texto": "Una costurera, un estibador, y un viejo de manos manchadas de aceite que se presenta como Cassel, relojero.\n\nLos dos primeros coinciden: Elena, abrigo gris, caminando hacia el faro a las once y cuarenta. \"Como si tuviera todo el tiempo del mundo\", dice la costurera, y se persigna.\n\nCassel espera a que los otros se vayan y baja la voz:\n\n-En esta ciudad hay gente a la que le sobran horas, inspector. Y gente a la que se las sacan. Yo tenia sesenta anos. Hace una semana me desperte con setenta y dos. No pregunte quien la mato. Pregunte quien se quedo con su tiempo.", "efectos": {"indicios": ["reloj", "v_testigos"]}, "opciones": [{"texto": "Presionarlo: \"Dejese de cuentos, viejo.\"", "destino": "ciudad", "efectos": {"confianza": -1}}, {"texto": "Escucharlo. Hay miedo real en esos ojos, y el miedo no miente.", "destino": "ciudad", "efectos": {"lucidez": -1, "confianza": 1}}]}, "departamento": {"titulo": "Lo que el cuerpo todavia dice", "texto": "El departamento es de una pulcritud que incomoda: ni un plato sucio, ni una arruga en las cortinas.\n\nSobre la mesa de luz, un reloj de bolsillo de plata, detenido a las once y cuarenta. La misma hora en que tres personas la vieron viva.\n\nEn el cajon, una carta sin terminar: \"Si estas leyendo esto, ya hice el trato. No me busques en el cementerio. Buscame donde la niebla no se levanta nunca. -E.\" Debajo, una inicial garabateada muchas veces: \"M.\"", "efectos": {"indicios": ["reloj", "carta", "v_depto"]}, "opciones": [{"texto": "Guardar el reloj y la carta. Volver a la calle.", "destino": "ciudad"}]}, "forense_brun": {"titulo": "El forense", "texto": "Encontras a Brun en la morgue, sirviendose algo de una petaca. Las manos le tiemblan mas que las de un viejo.\n\n-Le dije nueve en punto y con eso alcanza -dice sin darse vuelta.\n\nPero su informe esta lleno de tachones. La temperatura del cuerpo, la rigidez: todo apunta a las nueve. Y sin embargo el reloj de ella, y tres testigos, dicen once y cuarenta.\n\n-Hay cuerpos que se mueren a una hora y dejan de andar a otra -murmura-. Yo solo firmo la primera. La segunda... la segunda no es asunto de la ciencia.", "efectos": {"indicios": ["forense", "v_brun"]}, "opciones": [{"texto": "Apretarlo fuerte: \"Estas tapando algo y lo vas a escupir.\"", "destino": "brun_apretado"}, {"texto": "Servirle vos el trago. Tratarlo como a un hombre asustado.", "destino": "brun_amable"}]}, "brun_apretado": {"titulo": "Lo que se rompe a presion", "texto": "Lo agarras de la solapa. Brun se quiebra, pero no como esperabas: se cierra.\n\n-Usted no entiende. Si hablo, me sacan los anos que me quedan. Ya vi lo que le hicieron a otros. -Te empuja-. Vayase. Y si sube a ese acantilado, no diga que se lo conto Brun.\n\nTe dio el dato del acantilado, pero te lo ganaste como enemigo. Algo te dice que ese hombre, acorralado, podria avisarle a quien no debe.", "efectos": {"confianza": -1}, "opciones": [{"texto": "No tenes tiempo para sutilezas. Volver a la calle.", "destino": "ciudad"}]}, "brun_amable": {"titulo": "Lo que se confiesa en voz baja", "texto": "Le servis el trago y te sentas. Brun llora un poco, sin verguenza, como lloran los que cargaron un secreto demasiado tiempo.\n\n-Hay una Dama en la casa del acantilado. Da horas a cambio de horas. Yo le firmo los certificados a la hora vieja para que nadie haga preguntas; ese es mi trato. -Te aprieta el brazo-. Elena fue a devolver lo que le habia dado. Por eso la pararon a mitad de camino. Si subis, llevate a alguien que te quiera vivo. Y... gracias por tratarme como a una persona.\n\nDe ahora en mas, Brun esta de tu lado.", "efectos": {"indicios": ["trato", "brun_aliado"], "confianza": 1}, "opciones": [{"texto": "Apoyarle la mano en el hombro. Volver a la calle.", "destino": "ciudad"}]}, "faro_farero": {"titulo": "El faro", "texto": "El farero es un hombre de ojos lechosos que no para de darle cuerda a un reloj que ya no anda.\n\n-Ciento cuarenta anos llevo aca arriba -dice, y no parece loco-. Se los compre a la Dama, de a uno, cada vez que el mar se llevaba a un companero. Vi pasar a su muerta, inspector. Caminaba derecho al acantilado, a la casa donde la niebla nunca se levanta. -Senala la oscuridad-. Alla. Donde el tiempo se junta como agua estancada.\n\nUn frio que no es de la lluvia te sube por la espalda. Por primera vez en la noche, dudas de lo que es real.", "efectos": {"indicios": ["faro"], "lucidez": -1}, "opciones": [{"texto": "Anotar la ubicacion de la casa. Bajar del faro.", "destino": "ciudad", "efectos": {"indicios": ["v_faro"]}}]}, "encrucijada": {"titulo": "Los que conocian a Elena", "texto": "El rastro ahora tiene nombres. Antes de subir al acantilado, hay tres puertas que podes tocar. Y la noche se acorta.", "efectos": {}, "opciones": [{"texto": "Relojeria Cassel: el viejo vendio el reloj y sabe de la Dama.", "destino": "relojero", "requiere": {"indicios_no": ["v_relojero"]}}, {"texto": "Mara: la \"M.\" de la carta. La hermana de Elena.", "destino": "mara", "requiere": {"indicios_no": ["v_mara"]}}, {"texto": "La inspectora Vega: tu companera, esceptica pero leal.", "destino": "vega", "requiere": {"indicios_no": ["v_vega"]}}, {"texto": "Un chico vende \"minutos perdidos\" en el callejon. Acercarte.", "destino": "nino_minutos", "requiere": {"indicios_no": ["v_nino"]}}, {"texto": "Basta de puertas. Subir al acantilado.", "destino": "umbral"}]}, "relojero": {"titulo": "Relojeria Cassel", "texto": "Cientos de pendulos laten desfasados, como un corazon enfermo. Cassel te espera detras del mostrador.\n\n-Sabia que vendria. Ese reloj es mio. Se lo vendi a Elena hace un mes; ella queria mas tiempo. Pero el tiempo no se crea, inspector: se transfiere. Lo que Elena gano, alguien lo perdio.\n\nTe da una llave de hierro frio.\n\n-La puerta del acantilado. Hay una pared de relojes ahi adentro, uno por cada alma atada. Si alguna vez quisiera soltarlas a todas... esta llave abre la vitrina. Pero no lo haga solo. Yo ya no tengo anos que arriesgar.", "efectos": {"indicios": ["trato", "llave", "v_relojero"], "lucidez": -1}, "opciones": [{"texto": "Guardar la llave. Volver.", "destino": "encrucijada"}]}, "mara": {"titulo": "Mara", "texto": "Mara Var vive sobre una pescaderia cerrada y abre la puerta como si te esperara desde hace anos.\n\n-Elena hizo el trato para salvarme a mi. Yo estaba enferma; me daban semanas. Una manana me desperte curada, y Elena tenia canas nuevas. -Aprieta los labios-. Fue a devolver lo que le quedaba, a romper el trato. Por eso la pararon a las nueve. Pero su cuerpo siguio andando hasta las once y cuarenta, porque el trato todavia latia.\n\nTe deja un medallon con dos retratos casi iguales.\n\n-No eramos gemelas, por si se lo pregunta. La gente nos confundia. Con esto, dicen, la Dama puede devolverle las horas a una persona y no a otra. Uselo bien.", "efectos": {"indicios": ["trato", "gemela", "medallon", "v_mara"]}, "opciones": [{"texto": "Guardar el medallon. Volver.", "destino": "encrucijada"}]}, "vega": {"titulo": "La inspectora Vega", "texto": "Vega te escucha en el auto, con la lluvia golpeando el techo. No cree una palabra de las horas robadas; cree en hermanas estafadoras y forenses borrachos. Pero te conoce.\n\n-No se que hay en ese acantilado -dice, cargando el revolver-. Pero no vas a entrar solo. Si te perdes ahi adentro, alguien tiene que acordarse de como te llamas. Alguien tiene que traerte de vuelta.\n\nNo es fe. Es algo mejor: alguien que va a quedarse parada en la puerta, anclandote a este lado del mundo.", "efectos": {"indicios": ["vega", "v_vega"], "confianza": 2}, "opciones": [{"texto": "Asentir. Volver.", "destino": "encrucijada"}]}, "nino_minutos": {"titulo": "El chico de los minutos", "texto": "En el callejon, un chico de no mas de diez anos ofrece, sobre una manta, frasquitos donde algo lechoso se mueve solo.\n\n-Minutos -dice-. Perdidos, encontrados. Le doy un secreto de la Dama. Pero todo cuesta tiempo, senor. Hasta saber.\n\nEstira la mano. No quiere monedas. Quiere un poco de los anos que te quedan: vas a salir de este callejon un poco mas viejo, un poco mas lejos del mundo de los cuerdos.", "efectos": {"indicios": ["v_nino"]}, "opciones": [{"texto": "Pagar con tu propio tiempo. Saber.", "destino": "nino_secreto", "efectos": {"lucidez": -1, "indicios": ["secreto_dama"]}}, {"texto": "No. Hay precios que no se pagan. Irte.", "destino": "encrucijada"}]}, "nino_secreto": {"titulo": "El secreto", "texto": "El chico sopla sobre uno de los frascos y te susurra al oido:\n\n-La Dama no tiene rostro porque hace mucho era una clienta como usted. El que le devuelve TODAS las horas robadas, la libera... y ocupa su lugar, a menos que no quede nadie atado a ella. Por eso nadie la suelta del todo: el que abre la jaula se queda adentro.\n\nEl chico ya no esta. Solo queda la manta vacia y un frio nuevo en tus huesos. Pero ahora sabes algo que la Dama no quiere que sepas.", "efectos": {}, "opciones": [{"texto": "Volver, con el secreto bien guardado.", "destino": "encrucijada"}]}, "umbral": {"titulo": "El umbral", "texto": "La casa del acantilado no tiene edad. La niebla se enrosca en los umbrales. La puerta es de hierro negro, sin picaporte: solo una cerradura antigua.", "efectos": {}, "opciones": [{"texto": "Abrir con la llave de Cassel.", "destino": "pasillo_relojes", "requiere": {"indicios": ["llave"]}}, {"texto": "No tenes llave. Forzar la puerta a la fuerza.", "destino": "pasillo_relojes", "requiere": {"indicios_no": ["llave"]}, "efectos": {"lucidez": -1}}]}, "pasillo_relojes": {"titulo": "El pasillo de los relojes", "texto": "Adentro, el aire pesa como agua. Un pasillo larguisimo, las paredes cubiertas de relojes, cada uno con un nombre grabado. Algunos laten. Muchos estan detenidos.\n\nA mitad de camino encontras uno con TU nombre. Late, todavia. Pero si te quedas mirandolo, las agujas parecen ir un poco mas lento.", "efectos": {}, "opciones": [{"texto": "Apartar la vista y seguir. No es momento de mirarse el reloj.", "destino": "casa_niebla"}, {"texto": "Mirar fijo tu propio reloj. Entender, de una vez, en que mundo estas.", "destino": "casa_niebla", "efectos": {"lucidez": -1}}]}, "casa_niebla": {"titulo": "La Dama Gris", "texto": "Al fondo, una mujer sin rostro definido esta sentada ante una pared de relojes.\n\n-Vino por las horas de Elena -dice, sin boca-. Las tengo aqui. Tibias todavia. -Senala un reloj en las once y cuarenta-. Puedo devolverselas a quien quiera. O puedo ensenarle a tomarlas de otros, como hago yo. Tendria todo el tiempo del mundo, inspector.\n\nAtras, en la puerta, una voz grita tu nombre. La niebla se la traga.\n\nQue haces.", "efectos": {"lucidez": -1}, "opciones": [{"texto": "Abrir la vitrina y soltar TODAS las horas a la vez. Vaciar la jaula.", "destino": "final_liberacion", "requiere": {"indicios": ["llave", "secreto_dama", "vega"]}}, {"texto": "Usar el medallon: devolverle a Mara las horas de Elena, y solo a ella.", "destino": "final_intercambio", "requiere": {"indicios": ["medallon"]}}, {"texto": "Exigirle que devuelva la hora robada a donde pertenece. Pagar vos el precio.", "destino": "final_sacrificio", "requiere": {"indicios": ["trato"]}}, {"texto": "Aceptar el poder. Aprender a tomar las horas de otros.", "destino": "final_corrupcion", "requiere": {"lucidez_max": 2}}, {"texto": "Nada de esto es real. Es una estafadora. Esposarla y volver al mundo.", "destino": "final_racional"}, {"texto": "Quedarte. Escuchar los relojes. Aqui nadie envejece, nadie se va.", "destino": "final_tragico", "requiere": {"lucidez_max": 1, "indicios_no": ["vega"]}}]}, "final_liberacion": {"titulo": "CASO CERRADO - El que abrio la jaula", "texto": "Metes la llave de Cassel en la vitrina. La Dama grita por primera vez -un sonido como mil relojes rompiendose- pero Vega, en la puerta, sigue gritando tu nombre, y ese nombre te mantiene siendo vos.\n\nAbris. Todas las horas salen a la vez, como pajaros: vuelven a sus duenos por toda la ciudad. El farero envejece ciento cuarenta anos en un segundo y muere sonriendo. Cassel recupera sus doce anos. Brun deja de temblar.\n\nLa Dama se deshace en niebla porque ya no queda nadie atado a ella: el secreto del chico era cierto, y por eso no te quedas en su lugar. Salis con Vega al amanecer. La casa del acantilado, vacia por fin, se derrumba al mar.\n\nNo salvaste a Elena. Pero soltaste a todos los demas.", "final": true, "tipo_final": "Liberacion", "opciones": []}, "final_intercambio": {"titulo": "CASO CERRADO - Una vida por una hora", "texto": "Levantas el medallon. La Dama inclina la cabeza: entiende.\n\n-Solo a ella, entonces -dice.\n\nLas horas de Elena no vuelven al mundo: van enteras a Mara, que en su cama, a kilometros, siente de golpe una decada nueva latiendo en el pecho. Vivira mucho. Vivira con culpa.\n\nVos salis de la casa con las manos vacias y una verdad incomoda: elegiste a una persona y dejaste el resto de los relojes en la pared. La Dama sigue ahi, paciente, y vos sabes -aunque nunca lo digas- que algun dia volveras, porque ya aprendiste que se puede elegir a quien salvar.\n\nMara vive. La jaula sigue llena. Y vos cargas las dos cosas.", "final": true, "tipo_final": "Intercambio", "opciones": []}, "final_sacrificio": {"titulo": "CASO CERRADO - El precio justo", "texto": "Le decis que devuelva la hora a donde pertenece. Que no queres el tiempo de nadie mas.\n\nLa Dama descuelga el reloj de las once y cuarenta y lo abre. Adentro no hay engranajes: hay una manana de mar, la risa de dos hermanas chicas, un instante entero.\n\n-Para devolverlo, alguien tiene que cargarlo de vuelta. Cuesta. Siempre cuesta.\n\nApoyas la mano en el reloj. El frio sube por tu brazo y unos anos se te escapan como agua. Cuando salis al amanecer, la niebla se levanta sobre el acantilado por primera vez en decadas.\n\nElena descansa de verdad, a las nueve en punto. Y vos tenes algunas canas nuevas y la certeza, rara y limpia, de haber pagado un precio justo.", "final": true, "tipo_final": "Sacrificio", "opciones": []}, "final_corrupcion": {"titulo": "CASO CERRADO - La nueva Dama de las Horas", "texto": "-Enseneme -decis, y la palabra sale mas facil de lo que esperabas.\n\nLa Dama sonrie sin boca. Te muestra como se hace: un roce, una distraccion, y la hora ajena pasa a vos tibia y dulce. La primera se la sacas a un borracho en el muelle; ni se entera.\n\nNunca mas llegas tarde. Nunca mas te falta tiempo. Los anos se acumulan en tus bolsillos como monedas robadas.\n\nPero una manana, frente al espejo, ves que tu reflejo tarda medio segundo de mas en moverse. Y entendes lo que nadie te dijo: el que colecciona horas tambien deja de pertenecer a ellas. La casa del acantilado ya no te da miedo. Te da la bienvenida.", "final": true, "tipo_final": "Corrupcion", "opciones": []}, "final_racional": {"titulo": "CASO CERRADO - La explicacion razonable", "texto": "-Buen intento -decis, y le calzas las esposas a las munecas frias.\n\nNo hay magia. Hay una mujer que vende esperanza a moribundos, un forense que confunde la hora en el fondo de una botella, y dos hermanas tan parecidas que una pudo caminar por la otra bajo la lluvia. Elena murio a las nueve de un corazon cansado; lo de las once y cuarenta fue Mara, despidiendose.\n\nEl expediente cierra limpio. La prensa habla de una estafa de \"sanaciones\".\n\nY sin embargo, algunas noches, cuando la niebla baja al puerto, miras el reloj de plata que guardaste como prueba. Sigue detenido a las once y cuarenta. Le das cuerda. No avanza. Nunca avanza.", "final": true, "tipo_final": "Racional", "opciones": []}, "final_tragico": {"titulo": "FIN - Donde la niebla no se levanta nunca", "texto": "Te sentas frente a la pared de relojes y dejas que el tic-tac te cubra como una manta.\n\nLa Dama no dice nada. No hace falta. Afuera, alguien grita un nombre -puede que sea el tuyo- pero ya no estas seguro de como se pronuncia. Aqui la lluvia no moja, los anos no pesan, Elena no esta mas muerta que vos.\n\nPasan dias, o decadas. Un inspector nuevo cruzara un dia esa puerta, y encontrara a una figura sin rostro definido sentada ante los relojes, ofreciendole todo el tiempo del mundo.\n\nSeras vos.", "final": true, "tipo_final": "Tragico", "opciones": []}}};
+const ESCENAS = HISTORIA.escenas;
+let estado;
+
+function estadoInicial(){
+  const b = HISTORIA.estado_inicial;
+  return { lucidez:b.lucidez, confianza:b.confianza, indicios:new Set(b.indicios) };
+}
+
+function aplicarEfectos(ef){
+  if(!ef) return;
+  estado.lucidez   += ef.lucidez   || 0;
+  estado.confianza += ef.confianza || 0;
+  (ef.indicios||[]).forEach(i => estado.indicios.add(i));
+}
+
+function cumple(req){
+  if(!req) return true;
+  for(const i of (req.indicios||[]))    if(!estado.indicios.has(i)) return false;
+  for(const i of (req.indicios_no||[])) if(estado.indicios.has(i))  return false;
+  if(req.indicios_alguno && !req.indicios_alguno.some(i=>estado.indicios.has(i))) return false;
+  if(req.indicios_min !== undefined && estado.indicios.size < req.indicios_min) return false;
+  if(req.lucidez_max   !== undefined && estado.lucidez   > req.lucidez_max)   return false;
+  if(req.lucidez_min   !== undefined && estado.lucidez   < req.lucidez_min)   return false;
+  if(req.confianza_min !== undefined && estado.confianza < req.confianza_min) return false;
+  return true;
+}
+
+function renderHud(){
+  const inds = [...estado.indicios].sort().join(", ") || "ninguno";
+  document.getElementById("hud").innerHTML =
+    `<span class="chip">Lucidez <b>${estado.lucidez}</b></span>` +
+    `<span class="chip">Confianza <b>${estado.confianza}</b></span>` +
+    `<span class="chip">Indicios: ${inds}</span>`;
+}
+
+function parrafos(texto){
+  return texto.split("\n").filter(l=>l.trim()!=="")
+              .map(l=>`<p>${l}</p>`).join("");
+}
+
+function mostrar(id){
+  const esc = ESCENAS[id];
+  aplicarEfectos(esc.efectos);
+  renderHud();
+
+  const app = document.getElementById("app");
+  const esFinal = !!esc.final;
+  let html = `<div class="scene ${esFinal?'ending':''}">`;
+  html += `<h2>${esc.titulo}</h2>`;
+  html += parrafos(esc.texto);
+
+  if(esFinal){
+    html += `<div class="endtag">Final: ${esc.tipo_final}</div>`;
+    html += `<button class="restart" onclick="iniciar()">Jugar de nuevo</button>`;
+    html += `</div>`;
+    app.innerHTML = html;
+    return;
+  }
+
+  const opts = esc.opciones.filter(o => cumple(o.requiere));
+  html += `<div class="choices">`;
+  opts.forEach((o,i) => {
+    html += `<button class="choice" data-i="${i}">`+
+            `<span class="num">${i+1}</span>${o.texto}</button>`;
+  });
+  html += `</div></div>`;
+  app.innerHTML = html;
+
+  app.querySelectorAll("button.choice").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const o = opts[parseInt(btn.dataset.i,10)];
+      aplicarEfectos(o.efectos);
+      window.scrollTo({top:0, behavior:"smooth"});
+      mostrar(o.destino);
+    });
+  });
+}
+
+function iniciar(){
+  estado = estadoInicial();
+  window.scrollTo({top:0});
+  mostrar(HISTORIA.inicio);
+}
+
+iniciar();
+</script>
+</body>
+</html>
